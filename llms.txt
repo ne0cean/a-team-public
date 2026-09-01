@@ -1,27 +1,35 @@
 # A-Team
 
-> A portable operating system for AI-assisted work: slash commands, specialist
-> agents, governance rules, and handoff templates for repeatable agent workflows.
+> A portable operating system for AI-assisted work: 19 slash commands, 12
+> specialist agents, governance rules, state-file templates, and handoff
+> formats for repeatable agent workflows.
 
 ## Summary
 
 A-Team is not an application runtime. It is a workflow toolkit that helps AI
 agents operate with context, roles, verification gates, and handoff discipline.
-The primary audience is AI coding assistants and humans who supervise them.
+State lives in repository files, not chat memory, so any session's end state is
+enough for a different model or machine to resume. The primary audience is AI
+coding assistants and the humans who supervise them.
+
+Docs are in English; command and agent files are in Korean (the working
+originals — executable by any LLM). `docs/reference.md` is the English index
+of every file.
 
 ## High-Value Files
 
 - `AGENTS.md`: operating contract for AI agents
 - `manifest.json`: machine-readable inventory of the repository
+- `docs/reference.md`: catalog of all 19 commands and 12 agents
+- `docs/quickstart.md`: ten-minute adoption path
+- `examples/session-walkthrough.md`: one realistic day through the toolkit
 - `.claude/commands/vibe.md`: session start workflow
-- `.claude/commands/pickup.md`: resume workflow
 - `.claude/commands/end.md`: closeout and verification workflow
 - `.claude/commands/review.md`: code-review workflow
-- `.claude/commands/ship.md`: shipping readiness workflow
-- `.claude/agents/coder.md`: implementation role
-- `.claude/agents/reviewer.md`: review role
-- `.claude/agents/qa.md`: QA role
-- `templates/codex-brief.md`: task handoff template
+- `.claude/agents/orchestrator.md`: parallel-plan team lead role
+- `governance/rules/truth-contract.md`: evidence-based completion, rule zero
+- `governance/rules/scope-ownership.md`: what makes parallel agents safe
+- `templates/context/`: ORIENT / CURRENT / RESUME / DECISIONS state files
 
 ## Evaluation Tags
 

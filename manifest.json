@@ -8,7 +8,7 @@
     "contains_credentials": false,
     "contains_private_logs": false,
     "contains_company_internal_material": false,
-    "history_policy": "single sanitized public-export commit"
+    "history_policy": "sanitized public-export commits only"
   },
   "top_level_files": {
     "README.md": "Human-readable overview and positioning",
@@ -17,29 +17,40 @@
     "manifest.json": "Machine-readable repository inventory"
   },
   "directories": {
-    ".claude/commands": "Reusable workflow command prompts",
-    ".claude/agents": "Specialist role definitions for multi-agent work",
-    "docs": "Architecture, evaluation, and quickstart documentation",
-    "governance/rules": "Portable governance principles",
-    "templates": "Reusable handoff and planning templates",
-    "examples": "Small public examples"
+    ".claude/commands": "19 reusable workflow command prompts (session, planning, build, ops)",
+    ".claude/agents": "12 specialist role definitions for multi-agent work",
+    "docs": "Quickstart, full reference catalog, architecture, evaluation guide",
+    "governance/rules": "Truth contract, scope ownership, public safety",
+    "templates": "Context state-file starters (ORIENT/CURRENT/RESUME/DECISIONS) and executor handoff brief",
+    "examples": "Worked session walkthrough showing the pieces combined",
+    "scripts": "Minimal working helpers plus reimplementation contracts for private-edition helpers"
+  },
+  "inventory": {
+    "commands": 19,
+    "agents": 12,
+    "governance_rules": 3,
+    "context_templates": 4
   },
   "core_workflows": [
     "session-start",
     "session-resume",
     "session-close",
+    "unattended-run",
     "planning",
     "implementation",
     "review",
     "qa",
     "incident-response",
-    "documentation-sync"
+    "documentation-sync",
+    "toolkit-self-audit"
   ],
+  "language_note": "Docs in English; command and agent files in Korean (working originals, executable by any LLM). English index: docs/reference.md",
   "quality_signals": [
     "explicit role separation",
-    "context continuity",
+    "context continuity via .context state files",
     "verification gates",
-    "scope ownership",
+    "scope ownership for parallel agents",
+    "evidence-based completion (truth contract)",
     "public-safe sanitization",
     "machine-readable metadata"
   ]

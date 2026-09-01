@@ -1,7 +1,7 @@
 # Codex Task Brief — <task-slug>
 
-> 템플릿 사용법: 전 필드 필수. 150줄 이하 유지. 검증 명령 없으면 외주 금지
-> (governance/rules/codex-handoff.md §2 조건 4).
+> 템플릿 사용법: 전 필드 필수. 150줄 이하 유지. 기계 검증 명령(Verification
+> Gates)이 하나도 없으면 외주하지 않는다 — 검증 불가능한 작업은 위임 대상이 아니다.
 
 ## Task
 

@@ -8,7 +8,9 @@ operating files, not as a production application.
 1. Read `llms.txt`.
 2. Read `manifest.json`.
 3. Read `docs/architecture.md`.
-4. Read the specific command or agent file needed for the task.
+4. Find the right file via `docs/reference.md` (English catalog of every
+   command and agent).
+5. Read the specific command or agent file needed for the task.
 
 ## Operating Rules
 

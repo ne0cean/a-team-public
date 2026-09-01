@@ -2,94 +2,123 @@
 
 **A portable operating system for AI-assisted work.**
 
-A-Team is a curated set of agent roles, slash commands, and governance patterns
-for turning ad hoc AI usage into repeatable workflows. It is designed for people
-who use coding agents, research agents, and review agents every day and want the
-system to preserve context, enforce quality gates, and coordinate work across
-sessions.
+A-Team is a curated set of agent roles, slash commands, governance rules, and
+state-file templates for turning ad hoc AI usage into repeatable workflows. It
+grew out of daily practice running coding, research, and review agents across
+multiple machines, and it answers the questions a single clever prompt cannot:
 
-## Why This Repo Is Interesting
+- What should the next session read first?
+- Which agent owns planning, coding, review, or QA — and where do its rights end?
+- What counts as done, and who gets to say so?
+- How does work resume after a context reset, a model switch, or a machine change?
 
-Most AI tooling focuses on a single prompt or a single coding session. A-Team
-focuses on the missing operating layer around the agent:
+The answer, throughout, is the same: **put it in files an agent can read and
+execute.** Chat context evaporates; the repository remembers.
 
-- What context should the next model read first?
-- Which agent should own planning, coding, review, or QA?
-- What counts as done?
-- How do you resume work after a reset or model switch?
-- How do you stop an agent from drifting into unrelated files?
-
-A-Team answers those questions with files an AI agent can read and execute.
-
-## Repository Map
+## Quick tour
 
 ```text
 .
-├── AGENTS.md                  # AI entrypoint and operating contract
+├── AGENTS.md                  # Operating contract for AI agents working here
 ├── llms.txt                   # LLM-readable project summary
 ├── manifest.json              # Machine-readable inventory
 ├── .claude/
-│   ├── commands/              # Reusable workflow commands
-│   └── agents/                # Specialist agent role definitions
+│   ├── commands/              # 19 workflow commands (session, planning, build, ops)
+│   └── agents/                # 12 specialist role definitions
 ├── docs/
+│   ├── quickstart.md          # Adopt one workflow in ten minutes
+│   ├── reference.md           # Catalog of every command and agent
 │   ├── architecture.md        # System model and data flow
-│   ├── evaluation.md          # Signals an evaluator should score
-│   └── quickstart.md          # How to adapt the toolkit
-├── governance/
-│   └── rules/                 # Public governance principles
-└── templates/
-    └── codex-brief.md         # Executor handoff template
+│   └── evaluation.md          # How to judge a workflow system like this
+├── governance/rules/          # Truth contract, scope ownership, public safety
+├── templates/
+│   ├── context/               # ORIENT / CURRENT / RESUME / DECISIONS state files
+│   └── codex-brief.md         # Handoff brief for delegating implementation
+├── examples/
+│   └── session-walkthrough.md # One realistic day through the toolkit
+└── scripts/                   # Minimal working helpers + contracts for the rest
 ```
 
-## Core Workflows
+## The core loop
+
+Every session, regardless of task, follows the same shape:
+
+```mermaid
+flowchart LR
+  V["vibe<br/>load state"] --> P["plan<br/>prd / blueprint"]
+  P --> O["orchestrator<br/>ownership plan"]
+  O --> C["coder / tdd<br/>implement"]
+  C --> R["reviewer<br/>gate"]
+  R --> Q["qa<br/>verify in browser"]
+  Q --> E["end<br/>save state, push"]
+  E -. ".context/ files" .-> V
+```
+
+The dotted edge is the point: `end` writes state files that the next `vibe`
+reads, so a different day, model, or machine continues from written state
+instead of from memory. `examples/session-walkthrough.md` shows a full day of
+this loop on a small project.
+
+## Core workflows
 
 | Workflow | Files | Purpose |
 | --- | --- | --- |
-| Session start | `.claude/commands/vibe.md`, `.claude/commands/pickup.md` | Load state and choose the next action |
-| Session close | `.claude/commands/end.md` | Save state, verify work, and leave a commit-ready trail |
-| Autonomous loop | `.claude/commands/zzz.md` | Continue long-running work with explicit resume points |
-| Planning | `.claude/commands/blueprint.md`, `.claude/commands/prd.md` | Convert an idea into scope and implementation shape |
-| Implementation | `.claude/commands/tdd.md`, `.claude/agents/coder.md` | Execute small changes with verification gates |
-| Review | `.claude/commands/review.md`, `.claude/agents/reviewer.md` | Find regressions, risks, and missing tests before merge |
-| QA | `.claude/commands/qa.md`, `.claude/agents/qa.md` | Run structured product and UI checks |
-| Operations | `.claude/commands/incident.md`, `.claude/commands/doc-sync.md` | Diagnose failures and keep docs aligned |
+| Session start | `commands/vibe.md`, `commands/pickup.md` | Load state and choose the next action |
+| Session close | `commands/end.md` | Save state, verify work, commit, push |
+| Unattended run | `commands/zzz.md` | Continue long work with explicit resume points |
+| Planning | `commands/prd.md`, `commands/blueprint.md`, `commands/plan-eng.md` | Idea to scoped, reviewable plan |
+| Implementation | `commands/tdd.md`, `agents/coder.md`, `agents/orchestrator.md` | Test-first execution inside ownership lanes |
+| Review | `commands/review.md`, `agents/reviewer.md`, `agents/adversarial.md` | Find regressions and risks before merge |
+| QA | `commands/qa.md`, `agents/qa.md`, `agents/ui-inspector.md` | Structured product and visual checks |
+| Operations | `commands/incident.md`, `commands/doc-sync.md`, `commands/mesh.md` | Diagnose failures, kill doc drift, audit the toolkit itself |
 
-## Design Principles
+The full catalog with one-line descriptions of all 19 commands and 12 agents
+is in `docs/reference.md`.
 
-1. **Context is a first-class artifact.** Agents should not rely on chat memory
-   alone; important state belongs in files.
-2. **Roles are explicit.** Planner, executor, reviewer, and QA responsibilities
-   are separated to reduce drift.
-3. **Completion is evidence-based.** A task is not done because an agent says it
-   is done; it is done when the declared checks pass.
-4. **Scope boundaries matter.** Agents should know which files they own before
-   changing anything.
-5. **Handoff should be cheap.** A different model or device should be able to
-   resume from the written state.
+## Design principles
 
-## What To Read First
+1. **Context is a first-class artifact.** Important state lives in
+   `.context/` files (`templates/context/` has the four starters), not in
+   chat memory.
+2. **Roles are explicit.** Planner, executor, reviewer, and QA are different
+   agents with different rights. Overlap is where drift starts.
+3. **Completion is evidence-based.** Done means the declared checks passed —
+   see `governance/rules/truth-contract.md`, the toolkit's rule zero.
+4. **Scope is written before code.** Parallel agents get ownership lists, not
+   good intentions — see `governance/rules/scope-ownership.md`.
+5. **Handoff is cheap by design.** Any session's end state is enough for a
+   different model or machine to resume.
 
-For humans:
+## Language note
 
-1. `README.md`
-2. `docs/architecture.md`
-3. `docs/quickstart.md`
-4. `.claude/commands/vibe.md`
-5. `.claude/commands/review.md`
+Top-level docs are in English. The command and agent files themselves are in
+Korean — they are the working originals, exported as-is, and LLMs execute them
+regardless of the reader's language. Treat that as a live demonstration of the
+thesis: these files are programs whose runtime is a language model, and the
+model is bilingual even if you aren't. `docs/reference.md` indexes every file
+in English.
 
-For AI agents:
+## Getting started
 
-1. `llms.txt`
-2. `AGENTS.md`
-3. `manifest.json`
-4. `docs/evaluation.md`
-5. The command or agent file relevant to the current task
+Ten-minute path in `docs/quickstart.md`. The shortest version:
 
-## Public Export Scope
+1. Copy `.claude/commands/tdd.md` (or any one command) into your project.
+2. Copy `templates/context/CURRENT.md` to `.context/CURRENT.md` and fill in
+   three real tasks.
+3. Open your coding agent and invoke the command. Adjust the file's done
+   criteria to your stack as friction appears.
 
-This is a cleaned public edition. It intentionally excludes private project
-state, personal logs, internal infrastructure, credentials, and organization
-specific material. The repo keeps the reusable workflow machinery.
+Adopt one workflow, live with it, then take a second. Nothing here requires
+the whole system at once.
+
+## Public export scope
+
+This is the cleaned public edition of a private daily-driver toolkit. It
+intentionally excludes private project state, personal logs, machine-specific
+scripts, credentials, and employer-specific material — see
+`governance/rules/public-safety.md` for the exact line. Where commands
+reference private helper scripts, `scripts/README.md` documents their
+contracts so you can reimplement or skip them.
 
 ## License
 

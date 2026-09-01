@@ -177,7 +177,7 @@ git diff --name-only --diff-filter=A 2>/dev/null | grep -E '^(lib/.*\.ts|\.claud
 ## Step 3.8 — Commands Sync (A-Team 레포에서만, 자동)
 
 A-Team 레포에서 `/end` 실행 시 `~/.claude/commands/`의 신규/수정 파일을 `.claude/commands/`로 자동 동기화한다.
-이 단계가 없으면 Mac에서 만든 스킬이 push되지 않아 다른 PC에서 소실된다.
+이 단계가 없으면 한 머신에서 만든 스킬이 push되지 않아 다른 머신에서 소실된다.
 
 ```bash
 CURRENT_REPO=$(git rev-parse --show-toplevel 2>/dev/null || echo '')
@@ -276,13 +276,12 @@ BLOCK: 막힌 점 (없으면 없음)
 
 ### 6.0 A-Team 레포 = 양방향 브리지 (단일 push 대신)
 
-A-Team 레포(`scripts/git-bridge.sh` 존재)면 단일 push 대신 브리지를 실행하고 6.1~6.2를 건너뛴다.
-Mac→GitHub, VDI→GitLab 두-쓰기-원천을 fetch→merge→push로 수렴시킨다
-(SSOT: `docs/architecture/a-team-git-sync-decision-2026-07.md`).
+리모트가 둘 이상인 레포(`scripts/git-bridge.sh` 존재)면 단일 push 대신 브리지를 실행하고 6.1~6.2를 건너뛴다.
+서로 다른 머신이 서로 다른 리모트에 쓰는 구조라면, fetch→merge→push로 두 리모트를 수렴시킨다.
 
 ```bash
 if [ -f "scripts/git-bridge.sh" ] && git remote get-url github >/dev/null 2>&1; then
-  bash scripts/git-bridge.sh && echo "✅ Bridged: GitHub+GitLab 수렴" || echo "🔴 브리지 실패 — 출력 확인 후 재실행"
+  bash scripts/git-bridge.sh && echo "✅ Bridged: 리모트 수렴 완료" || echo "🔴 브리지 실패 — 출력 확인 후 재실행"
   # 브리지 성공/실패와 무관하게 6.1 이하 생략 (충돌 시 수동 해결 필요)
   SKIP_PUSH=true
 fi
