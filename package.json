@@ -1,0 +1,22 @@
+{
+  "name": "a-team-public",
+  "version": "0.1.0",
+  "description": "Portable AI operating toolkit for repeatable agent workflows",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ne0cean/a-team-public.git"
+  },
+  "keywords": [
+    "ai-agents",
+    "claude-code",
+    "codex",
+    "workflow",
+    "prompt-engineering",
+    "multi-agent",
+    "llms-txt"
+  ],
+  "scripts": {
+    "check": "node -e \"JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('manifest ok')\""
+  }
+}

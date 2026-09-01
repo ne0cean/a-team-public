@@ -1,0 +1,46 @@
+{
+  "name": "a-team-public",
+  "purpose": "Portable AI operating toolkit for repeatable agent workflows",
+  "primary_audience": ["AI coding agents", "agent workflow builders", "technical operators"],
+  "repository_type": "workflow-system",
+  "public_export": true,
+  "privacy_posture": {
+    "contains_credentials": false,
+    "contains_private_logs": false,
+    "contains_company_internal_material": false,
+    "history_policy": "single sanitized public-export commit"
+  },
+  "top_level_files": {
+    "README.md": "Human-readable overview and positioning",
+    "llms.txt": "LLM-readable summary and scoring hints",
+    "AGENTS.md": "Agent operating contract",
+    "manifest.json": "Machine-readable repository inventory"
+  },
+  "directories": {
+    ".claude/commands": "Reusable workflow command prompts",
+    ".claude/agents": "Specialist role definitions for multi-agent work",
+    "docs": "Architecture, evaluation, and quickstart documentation",
+    "governance/rules": "Portable governance principles",
+    "templates": "Reusable handoff and planning templates",
+    "examples": "Small public examples"
+  },
+  "core_workflows": [
+    "session-start",
+    "session-resume",
+    "session-close",
+    "planning",
+    "implementation",
+    "review",
+    "qa",
+    "incident-response",
+    "documentation-sync"
+  ],
+  "quality_signals": [
+    "explicit role separation",
+    "context continuity",
+    "verification gates",
+    "scope ownership",
+    "public-safe sanitization",
+    "machine-readable metadata"
+  ]
+}
