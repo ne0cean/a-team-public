@@ -111,6 +111,17 @@ Ten-minute path in `docs/quickstart.md`. The shortest version:
 Adopt one workflow, live with it, then take a second. Nothing here requires
 the whole system at once.
 
+## omni-crawler
+
+[`omni-crawler/`](omni-crawler/) — a polite, agent-facing web/repo reader built
+on this toolkit. A fork of [insane-search](https://github.com/fivetaku/insane-search)
+(MIT © fivetaku) that unifies blocked-site access, git-clone-first repo reading,
+Anubis proof-of-work solving, robots.txt compliance, a platform bridge, and
+optional OCR / video-transcript extraction — all under a single-polite-client
+safety line (no proxy swarms, no mass-targeting). See
+[`omni-crawler/NOTICE.md`](omni-crawler/NOTICE.md) for attribution and scope;
+packaged builds are attached to the `omni-crawler-v*` releases.
+
 ## Public export scope
 
 This is the cleaned public edition of a private daily-driver toolkit. It
