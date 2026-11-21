@@ -170,6 +170,29 @@ def test_empty_ocr_results_are_not_cached():
         requests.post = original_post
 
 
+def test_failed_api_responses_are_not_cached():
+    import requests
+
+    os.environ["GEMINI_API_KEY"] = "k"
+    calls = {"n": 0}
+
+    class Response:
+        status_code = 503
+
+    def post(*args, **kwargs):
+        calls["n"] += 1
+        return Response()
+
+    original_post = requests.post
+    try:
+        requests.post = post
+        assert ocr._ocr_one(b"retry after failure", "image/png", 1) is None
+        assert ocr._ocr_one(b"retry after failure", "image/png", 1) is None
+        assert calls["n"] == 2
+    finally:
+        requests.post = original_post
+
+
 def test_ocr_cache_is_bounded_lru():
     import requests
 
