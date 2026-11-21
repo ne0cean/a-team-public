@@ -16,3 +16,5 @@ reference/
 .sentinel/
 .shots/
 .verify-screenshots/
+__pycache__/
+*.pyc

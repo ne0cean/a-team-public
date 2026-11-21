@@ -13,6 +13,7 @@ _ORIG_OCR_ONE = ocr._ocr_one
 def setup_function(_):
     ocr._download = _ORIG_DOWNLOAD
     ocr._ocr_one = _ORIG_OCR_ONE
+    ocr._OCR_CACHE.clear()
     os.environ.pop("INSANE_OCR", None)
     os.environ.pop("GEMINI_API_KEY", None)
 
@@ -79,6 +80,153 @@ def test_ssrf_image_skipped():
     out, trace = ocr.maybe_enrich(md, force=True)
     assert called["n"] == 0                 # never downloaded the SSRF target
     assert trace == [{"skip": "no_images"}]  # filtered out before download
+
+
+def test_identical_image_bytes_use_cached_gemini_result():
+    import requests
+
+    os.environ["GEMINI_API_KEY"] = "k"
+    calls = {"n": 0}
+
+    class Response:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {"candidates": [{"content": {"parts": [{"text": "OCR text"}]}}]}
+
+    def post(*args, **kwargs):
+        calls["n"] += 1
+        return Response()
+
+    original_post = requests.post
+    try:
+        requests.post = post
+        assert ocr._ocr_one(b"same image", "image/png", 1) == "OCR text"
+        assert ocr._ocr_one(b"same image", "image/png", 2) == "OCR text"
+        assert calls["n"] == 1
+    finally:
+        requests.post = original_post
+
+
+def test_ocr_cache_key_includes_mime_and_prompt():
+    import requests
+
+    os.environ["GEMINI_API_KEY"] = "k"
+    calls = []
+
+    class Response:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {"candidates": [{"content": {"parts": [{"text": "OCR text"}]}}]}
+
+    def post(*args, **kwargs):
+        calls.append(kwargs["json"]["contents"][0]["parts"])
+        return Response()
+
+    original_post = requests.post
+    original_prompt = ocr._PROMPT
+    try:
+        requests.post = post
+        assert ocr._ocr_one(b"same image", "image/png", 1) == "OCR text"
+        assert ocr._ocr_one(b"same image", "image/jpeg", 1) == "OCR text"
+        ocr._PROMPT = original_prompt + " 추가 조건"
+        assert ocr._ocr_one(b"same image", "image/jpeg", 1) == "OCR text"
+        assert len(calls) == 3
+        assert calls[0][1]["inline_data"]["mime_type"] == "image/png"
+        assert calls[1][1]["inline_data"]["mime_type"] == "image/jpeg"
+        assert calls[2][0]["text"] == original_prompt + " 추가 조건"
+    finally:
+        requests.post = original_post
+        ocr._PROMPT = original_prompt
+
+
+def test_empty_ocr_results_are_not_cached():
+    import requests
+
+    os.environ["GEMINI_API_KEY"] = "k"
+    calls = {"n": 0}
+
+    class Response:
+        status_code = 200
+
+        @staticmethod
+        def json():
+            return {"candidates": [{"content": {"parts": [{"text": "  \n "}]}}]}
+
+    def post(*args, **kwargs):
+        calls["n"] += 1
+        return Response()
+
+    original_post = requests.post
+    try:
+        requests.post = post
+        assert ocr._ocr_one(b"empty result", "image/png", 1) == "  \n "
+        assert ocr._ocr_one(b"empty result", "image/png", 1) == "  \n "
+        assert calls["n"] == 2
+    finally:
+        requests.post = original_post
+
+
+def test_failed_api_responses_are_not_cached():
+    import requests
+
+    os.environ["GEMINI_API_KEY"] = "k"
+    calls = {"n": 0}
+
+    class Response:
+        status_code = 503
+
+    def post(*args, **kwargs):
+        calls["n"] += 1
+        return Response()
+
+    original_post = requests.post
+    try:
+        requests.post = post
+        assert ocr._ocr_one(b"retry after failure", "image/png", 1) is None
+        assert ocr._ocr_one(b"retry after failure", "image/png", 1) is None
+        assert calls["n"] == 2
+    finally:
+        requests.post = original_post
+
+
+def test_ocr_cache_is_bounded_lru():
+    import requests
+
+    os.environ["GEMINI_API_KEY"] = "k"
+    calls = {"n": 0}
+    original_limit = ocr._OCR_CACHE_MAX_SIZE
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, text):
+            self.text = text
+
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": self.text}]}}]}
+
+    def post(*args, **kwargs):
+        calls["n"] += 1
+        return Response(str(calls["n"]))
+
+    original_post = requests.post
+    try:
+        ocr._OCR_CACHE_MAX_SIZE = 2
+        requests.post = post
+        assert ocr._ocr_one(b"a", "image/png", 1) == "1"
+        assert ocr._ocr_one(b"b", "image/png", 1) == "2"
+        assert ocr._ocr_one(b"a", "image/png", 1) == "1"  # Refresh a; b becomes least recent.
+        assert ocr._ocr_one(b"c", "image/png", 1) == "3"
+        assert len(ocr._OCR_CACHE) == 2
+        assert ocr._ocr_one(b"b", "image/png", 1) == "4"  # b was evicted.
+        assert calls["n"] == 4
+    finally:
+        requests.post = original_post
+        ocr._OCR_CACHE_MAX_SIZE = original_limit
 
 
 def test_max_images_cap():
