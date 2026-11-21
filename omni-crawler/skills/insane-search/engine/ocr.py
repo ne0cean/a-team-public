@@ -19,8 +19,11 @@ SCOPE / SAFETY:
 from __future__ import annotations
 
 import base64
+from collections import OrderedDict
+import hashlib
 import os
 import re
+import threading
 from typing import Optional
 from urllib.parse import urlsplit
 
@@ -40,6 +43,9 @@ _IMG_URL_RE = re.compile(
 _MIME = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
          ".gif": "image/gif", ".webp": "image/webp"}
 
+_OCR_CACHE_MAX_SIZE = 256
+_OCR_CACHE: OrderedDict[tuple[str, str, str, str], str] = OrderedDict()
+_OCR_CACHE_LOCK = threading.Lock()
 _PROMPT = (
     "이 이미지의 모든 텍스트를 정확하게 추출해주세요. 표/리스트는 마크다운으로 "
     "구조화하고, 제목·본문을 구분해 가독성 좋게 정리해주세요. 마크다운으로 출력."
@@ -104,6 +110,13 @@ def _ocr_one(image_bytes: bytes, mime: str, timeout: int) -> Optional[str]:
     key = api_key()
     if not key:
         return None
+    prompt_hash = hashlib.sha256(_PROMPT.encode("utf-8")).hexdigest()
+    cache_key = (hashlib.sha256(image_bytes).hexdigest(), mime, GEMINI_MODEL, prompt_hash)
+    with _OCR_CACHE_LOCK:
+        cached = _OCR_CACHE.get(cache_key)
+        if cached is not None:
+            _OCR_CACHE.move_to_end(cache_key)
+            return cached
     try:
         import requests
         data = base64.b64encode(image_bytes).decode()
@@ -118,7 +131,14 @@ def _ocr_one(image_bytes: bytes, mime: str, timeout: int) -> Optional[str]:
         )
         if resp.status_code != 200:
             return None
-        return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        if text.strip():
+            with _OCR_CACHE_LOCK:
+                _OCR_CACHE[cache_key] = text
+                _OCR_CACHE.move_to_end(cache_key)
+                while len(_OCR_CACHE) > _OCR_CACHE_MAX_SIZE:
+                    _OCR_CACHE.popitem(last=False)
+        return text
     except Exception:
         return None
 
